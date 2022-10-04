@@ -14,14 +14,10 @@ export default class LoggerService implements LoggerServiceInterface {
       level: "info",
       transports: [
         new transports.Console({
-          handleExceptions: true,
+          // handleExceptions: true,
         }),
       ],
-      format: combine(
-        timestamp({ format: "DD-MM-YYYY HH:mm:ss" }),
-        errors({ stack: true }),
-        json()
-      ),
+      format: combine(json()),
     });
   }
 
