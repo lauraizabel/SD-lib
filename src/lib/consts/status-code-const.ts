@@ -1,4 +1,6 @@
-export const STATUS_CODES = {
+import { StatusCodeInterface } from "../interfaces/StatusCodeInterface";
+
+export const STATUS_CODES: StatusCodeInterface = {
   100: "Continue", // RFC 7231 6.2.1
   101: "Switching Protocols", // RFC 7231 6.2.2
   102: "Processing", // RFC 2518 10.1 (obsoleted by RFC 4918)

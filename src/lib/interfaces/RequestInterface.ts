@@ -3,5 +3,5 @@ export interface RequestInterface {
   path: string;
   httpVersion: string;
   headers: any;
-  body: Object;
+  body: any;
 }
