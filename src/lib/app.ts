@@ -1,7 +1,22 @@
 import "reflect-metadata";
+import { RequestInterface } from "./common/interfaces/RequestInterface";
+import { ResponseInterface } from "./common/interfaces/ResponseInterface";
 import LoggerService from "./common/services/LoggerService";
 import NetService from "./common/services/NetService";
 import RoutesService from "./common/services/RoutesService";
+
+const testingController = (
+  request: RequestInterface,
+  response: ResponseInterface
+) => {
+  const newResponse: ResponseInterface = {
+    status: 400,
+    json: {
+      error: "algo deu errado :(",
+    },
+  };
+  return newResponse;
+};
 
 export default class App {
   private readonly loggerService = new LoggerService();
@@ -13,11 +28,10 @@ export default class App {
 
   constructor() {
     this.routeService.addRoute({
-      controller: (aux) => {},
+      controller: testingController,
       method: "GET",
       path: "testando",
     });
-    console.log("criado", this.routeService);
     this.netService.start();
   }
 }

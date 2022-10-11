@@ -1,9 +1,14 @@
 import { scoped, registry, Lifecycle } from "tsyringe";
 import { MethodsInterface } from "../interfaces/MethodsInterface";
+import { RequestInterface } from "../interfaces/RequestInterface";
+import { ResponseInterface } from "../interfaces/ResponseInterface";
 
-interface Route {
+export interface Route {
   path: string;
-  controller: (aux: any) => any;
+  controller: (
+    request: RequestInterface,
+    response: ResponseInterface
+  ) => ResponseInterface | void;
   method: MethodsInterface;
 }
 
@@ -14,11 +19,13 @@ export default class RoutesService {
 
   constructor() {}
 
-  addRoute(route: Route) {
+  public addRoute = (route: Route) => {
     this.routes.push(route);
-  }
+  };
 
-  getRoute(path: string, method: MethodsInterface) {
-    this.routes.find((route) => route.path === path && route.method === method);
-  }
+  public getRoute = (path: string, method: MethodsInterface) => {
+    return this.routes.find(
+      (route) => route.path === path.replace("/", "") && route.method === method
+    );
+  };
 }
