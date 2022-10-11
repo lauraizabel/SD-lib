@@ -2,18 +2,22 @@ import "reflect-metadata";
 
 import LoggerService from "./services/LoggerService";
 import NetService from "./services/NetService";
-import RoutesService from "./services/RoutesService";
+import RoutesService, { Route } from "./services/RoutesService";
 
 export class App {
   private readonly loggerService = new LoggerService();
-  routeService = new RoutesService();
+  private routeService = new RoutesService();
   private readonly netService = new NetService(
     this.loggerService,
     this.routeService
   );
 
-  start(port: number) {
-    this.netService.start(port);
+  start(port: number, host: string) {
+    this.netService.start(port, host);
+  }
+
+  route(route: Route) {
+    this.routeService.addRoute(route);
   }
 }
 

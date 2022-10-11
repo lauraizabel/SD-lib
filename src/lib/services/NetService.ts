@@ -17,18 +17,18 @@ export default class NetService {
     @inject("RoutesService") private routesService: RoutesService
   ) {}
 
-  start(port: number) {
+  start(port: number, host: string): void {
     try {
       const server = net.createServer(this.createServer);
       this.logger.info(`Server runing on port ${port}`);
 
-      server.listen(port, "127.0.0.1");
+      server.listen(port, host);
     } catch (error) {
       console.log(error);
     }
   }
 
-  createServer = (socket: net.Socket) => {
+  createServer = (socket: net.Socket): void => {
     socket.on("data", (data) => this.receiveCallback(data, socket));
   };
 

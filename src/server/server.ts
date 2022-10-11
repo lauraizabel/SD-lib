@@ -1,4 +1,5 @@
 import Lib from "../lib/app";
+import "../lib/utils/NetworkUtils";
 import { RequestInterface } from "../lib/interfaces/RequestInterface";
 import { ResponseInterface } from "../lib/interfaces/ResponseInterface";
 
@@ -52,25 +53,25 @@ const putRequestTest = (
   };
 };
 
-Lib.routeService.addRoute({
+Lib.route({
   path: "get",
   method: "GET",
   controller: getRequestTest,
 });
 
-Lib.routeService.addRoute({
+Lib.route({
   path: "post",
   method: "POST",
   controller: postRequestTest,
 });
 
-Lib.routeService.addRoute({
+Lib.route({
   path: "put",
   method: "PUT",
   controller: putRequestTest,
 });
 
-Lib.routeService.addRoute({
+Lib.route({
   path: "delete",
   method: "DELETE",
   controller: deleteRequestTest,
