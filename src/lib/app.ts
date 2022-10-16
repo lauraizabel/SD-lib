@@ -1,19 +1,24 @@
 import "reflect-metadata";
 
-import LoggerService from "./services/LoggerService";
-import NetService from "./services/NetService";
+import HttpService from "./services/HttpService";
 import RoutesService, { Route } from "./services/RoutesService";
+import DnsConnectionService from "./services/DnsConnectionService";
 
 export class App {
-  private readonly loggerService = new LoggerService();
   private routeService = new RoutesService();
-  private readonly netService = new NetService(
-    this.loggerService,
-    this.routeService
-  );
+  private readonly httpService = new HttpService(this.routeService);
+  private readonly dnsConnectionService = new DnsConnectionService();
 
-  start(port: number, host: string) {
-    this.netService.start(port, host);
+  async start(port: number, host: string) {
+    await this.httpService.start(port, host);
+  }
+
+  async setDnsConnection(
+    port: number,
+    host: string,
+    keepAlive: boolean = false
+  ) {
+    await this.dnsConnectionService.startConnection(host, port, keepAlive);
   }
 
   route(route: Route) {
