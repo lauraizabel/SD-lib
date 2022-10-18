@@ -1,17 +1,15 @@
 import net from "net";
-import { scoped, registry, Lifecycle, inject } from "tsyringe";
 
-import RoutesService from "./RoutesService";
 import { MethodsInterface } from "../interfaces/MethodsInterface";
 import { STATUS_CODES } from "../consts/status-code-const";
 import { RequestInterface } from "../interfaces/RequestInterface";
 import { response as responseDefault } from "../consts/response-const";
 import { ResponseInterface } from "../interfaces/ResponseInterface";
+import { RoutesServiceInterface } from "../interfaces/RoutesServiceInterface";
+import { HttpServiceInterface } from "../interfaces/HttpServiceInterface";
 
-@scoped(Lifecycle.ResolutionScoped)
-@registry([{ token: "HttpService", useClass: HttpService }])
-export default class HttpService {
-  constructor(@inject("RoutesService") private routesService: RoutesService) {}
+export default class HttpService implements HttpServiceInterface {
+  constructor(private routesService: RoutesServiceInterface) {}
 
   start(port: number, host: string): void {
     try {
@@ -48,8 +46,22 @@ export default class HttpService {
       httpVersion,
       headers,
       body: {},
+      query: {},
     };
 
+    try {
+      const query = path.split("?")?.[1];
+      if (query) {
+        const parameters = query.split("&");
+        parameters.forEach((parameter) => {
+          const [key, value] = parameter.split("=");
+          request.query[key] = value;
+        });
+      }
+    } catch {
+      request.query = {};
+    }
+    
     try {
       request.body = JSON.parse(bodyContent[0]);
     } catch (error) {
@@ -81,9 +93,8 @@ export default class HttpService {
     return json;
   };
 
-  receiveCallback(dataBuffer: Buffer, socket: net.Socket) {
+  async receiveCallback(dataBuffer: Buffer, socket: net.Socket) {
     const request = this.transformDataBufferInRequestObject(dataBuffer);
-
     const controller = this.routesService.getRoute(
       request.path,
       request.method as MethodsInterface
@@ -95,7 +106,7 @@ export default class HttpService {
       return;
     }
 
-    const response = controller?.controller(request, responseDefault);
+    const response = await controller?.controller(request, responseDefault);
 
     const status = this.buildStatusCode(response);
 
@@ -105,3 +116,4 @@ export default class HttpService {
     socket.end();
   }
 }
+

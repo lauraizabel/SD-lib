@@ -4,4 +4,5 @@ export interface RequestInterface {
   httpVersion: string;
   headers: any;
   body: any;
+  query: any;
 }

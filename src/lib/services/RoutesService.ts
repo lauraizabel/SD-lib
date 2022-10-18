@@ -1,20 +1,17 @@
-import { scoped, registry, Lifecycle } from "tsyringe";
 import { MethodsInterface } from "../interfaces/MethodsInterface";
 import { RequestInterface } from "../interfaces/RequestInterface";
 import { ResponseInterface } from "../interfaces/ResponseInterface";
+import { RoutesServiceInterface } from "../interfaces/RoutesServiceInterface";
 
 export interface Route {
   path: string;
   controller: (
     request: RequestInterface,
     response: ResponseInterface
-  ) => ResponseInterface | void;
+  ) => Promise<ResponseInterface | void> | ResponseInterface | void;
   method: MethodsInterface;
 }
-
-@scoped(Lifecycle.ResolutionScoped)
-@registry([{ token: "RoutesService", useClass: RoutesService }])
-export default class RoutesService {
+export default class RoutesService implements RoutesServiceInterface {
   private routes: Route[] = [];
 
   constructor() {}
@@ -25,7 +22,7 @@ export default class RoutesService {
 
   public getRoute = (path: string, method: MethodsInterface) => {
     return this.routes.find(
-      (route) => route.path === path.replace("/", "") && route.method === method
+      (route) => route.path === path.split("?")[0].replace("/", "") && route.method === method
     );
   };
 }

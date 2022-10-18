@@ -1,33 +1,37 @@
 import net from "net";
-import { scoped, registry, Lifecycle } from "tsyringe";
 
-@scoped(Lifecycle.ResolutionScoped)
-@registry([{ token: "DnsConnectionService", useClass: DnsConnectionService }])
+export interface DnsConfig {
+  config: {
+    method: "SET" | "GET";
+    serviceName: string;
+    address: string;
+    port: number;
+  };
+  dnsAddress: string;
+  dnsPort: number;
+}
+
 export default class DnsConnectionService {
-  constructor() {}
-
-  async startConnection(
-    path: string,
-    port: number,
-    keepAlive: boolean = false
-  ): Promise<any> {
+  async setServerOn({ config, dnsAddress, dnsPort }: DnsConfig): Promise<any> {
     try {
+      const { address, method, port, serviceName } = config;
+
+
+      // precisa alterar a formatacao desse json no dns
+      const configServer = {
+        address,
+        method, 
+        port, 
+        serviceName
+      };
+
       await net
-        .connect(port, path, () => {
+        .connect(dnsPort, dnsAddress, () => {
           console.info("Middleware connected DNS");
         })
-        .on("data", (data) => {
-          console.log(data);
-        })
+        .on("data", (_) => {})
         .on("error", (err) => console.log(err))
-        .write(
-          JSON.stringify({
-            method: "SET",
-            hostname: "setapproval",
-            ip: "127.0.0.1",
-            port: 8888,
-          })
-        );
+        .write(JSON.stringify(configServer));
 
       return;
     } catch (error) {
