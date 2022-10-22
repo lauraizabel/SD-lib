@@ -3,7 +3,9 @@ import { ipv4Ips } from "./utils/NetworkUtils";
 
 import HttpService from "./services/ServerService";
 import RoutesService, { Route } from "./services/RoutesService";
-import DnsConnectionService, { DnsConfig } from "./services/DnsConnectionService";
+import DnsConnectionService, {
+  DnsConfig,
+} from "./services/DnsConnectionService";
 import ClientService from "./services/ClientService";
 
 export class App {
@@ -27,13 +29,13 @@ export class App {
   async server() {
     await this.httpService.start(this.port, this.address);
 
-    // Aqui ta as configs pra se conectar com o dns, 
+    // Aqui ta as configs pra se conectar com o dns,
     // coloquei tudo como fixo (do dns) pq nao sabia como fazer, mas acho q assim
     // ta de boa.
     const setServerOnParams: DnsConfig = {
       config: {
         address: this.address,
-        method: 'SET',
+        method: "SET",
         port: this.port,
         serviceName: this.serviceName,
       },
@@ -44,11 +46,11 @@ export class App {
     await this.dnsConnectionService.setServerOn(setServerOnParams);
   }
 
-  async client() {
-    await this.clientService.receiveData(
-      { hostname: "127.0.0.1", port: 3004 },
-      { body: JSON.stringify({ hi: "dude" }), path: "/comments" }
-    );
+  // esse client() poderia ser alterado para apenas utilizar a propria classe instanciada, ao inves de declarar ela aqui
+  // ela sendo declarada aqui, obriga ao cliente ter que setar os parametros que ele nao deveria saber 
+  // portanto, acho que ver se faz sentido se aqui realmente é necessário faz sentido.
+  client() {
+    return this.clientService;
   }
 
   route(route: Route) {
@@ -56,23 +58,16 @@ export class App {
   }
 }
 
-const app = new App(3001, 'setStudent');
+const app = new App(3001, "setStudent");
 
 const init = async () => {
-  app.route({
-    path: "",
-    method: "POST",
-    controller: (req, res) => {
-      return {
-        json: { message: "OK" },
-        status: 200,
-      };
-    },
-  });
+  const data = await app
+    .client()
+    // abstrair ainda mais e conectar com o DNS
+    .receiveData({ hostname: "localhost", port: 3004 }, { path: "/comments" });
 
-  // await app.server(3001, "localhost");
-
-  await app.client();
+  console.log(data);
+    
 };
 
 init();

@@ -9,15 +9,17 @@ interface ConfigNet {
 // com um JSON.stringfy()
 interface ConfigClient {
   path: string;
-  body: string;
+  body?: string;
 }
-
+// Ponto de melhoria:
+// as duas funcoes estao utilizando o mesmo código, poderia mudar
+// pra usar apenas um método;
 export default class ClientService {
-  private async getConnection(path: string, port: number): Promise<net.Socket> {
-    const connection = await net
-      .connect(port, path, () => {
-        console.info("[getConnection] - connected to server");
-      })
+  private getConnection(path: string, port: number): net.Socket {
+    const connection = net
+      .connect(port, path, () =>
+        console.info("[getConnection] - connected to server")
+      )
       .on("error", () =>
         console.log("[getConnection] - ERROR WHEN TRY CONNECT")
       )
@@ -25,51 +27,53 @@ export default class ClientService {
     return connection;
   }
 
-  async receiveData({ hostname, port }: ConfigNet, { path }: ConfigClient) {
-    let object: Object = {};
-
-    const connection = await this.getConnection(hostname, port);
-
-    const writeString = `
-      GET ${path} HTTP/1.1
-      Content-Type: application/json
-      Host: ${hostname}:${port}
+  receiveData({ hostname, port }: ConfigNet, { path }: ConfigClient) {
+    return new Promise((resolve, reject) => {
+      const connection = this.getConnection(hostname, port);
+      const writeString = `
+        GET ${path} HTTP/1.1
+        Content-Type: application/json
+        Connection: keep-alive
+        Host: ${hostname}:${port}
       `;
 
-    // Problema ta ao enviar o dado de volta pro cliente receber, nao achei maneira de resolver isso
-    // por enqt
-    const test = await connection
-      .on("data", (data) => {
-        object = data.toString();
-        console.log("[receiveData] - ", object);
-
-        return object;
-      })
-      .write(writeString);
-
-    console.log(object, test, "test");
+      connection
+        .on("data", (data) => {
+          try {
+            resolve(JSON.parse(data.toString()));
+          } catch (error) {
+            resolve(data.toString());
+          }
+          connection.destroy();
+        })
+        .on("error", (err) => reject(err))
+        .write(writeString);
+    });
   }
 
-  async sendData({ hostname, port }: ConfigNet, { body, path }: ConfigClient) {
-    let object: Object = {};
+  sendData({ hostname, port }: ConfigNet, { body, path }: ConfigClient) {
+    return new Promise((resolve, reject) => {
+      const connection = this.getConnection(hostname, port);
 
-    const connection = await this.getConnection(hostname, port);
+      const writeString = `
+          POST ${path} HTTP/1.1
+          Content-Type: application/json
+          Host: ${hostname}:${port}
+          Connection: keep-alive
+          Content-Length: ${body?.length}
+          ${body}
+        `;
 
-    const writeString = `
-      POST ${path} HTTP/1.1
-      Content-Type: application/json
-      Host: ${hostname}:${port}
-      Connection: keep-alive
-      Content-Length: ${body.length}
-      ${body}
-    `;
-
-    await connection
-      .on("data", (data) => {
-        object = data.toString();
-
-        return object;
-      })
-      .write(writeString);
+      connection
+        .on("data", (data) => {
+          try {
+            resolve(JSON.parse(data.toString()));
+          } catch (error) {
+            resolve(data.toString());
+          }
+        })
+        .on("error", (err) => reject(err))
+        .write(writeString);
+    });
   }
 }

@@ -16,8 +16,6 @@ export default class DnsConnectionService {
     try {
       const { address, method, port, serviceName } = config;
 
-
-      // precisa alterar a formatacao desse json no dns
       const configServer = {
         address,
         method, 
@@ -38,4 +36,6 @@ export default class DnsConnectionService {
       console.log(error);
     }
   }
+
+  async getIpAndPort() {}
 }
