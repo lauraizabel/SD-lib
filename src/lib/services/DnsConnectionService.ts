@@ -38,11 +38,13 @@ export default class DnsConnectionService {
       net
         .connect(dnsPort, dnsAddress)
         .on("data", (data) => {
+          console.log("DATA",data.toString(), "END")
           try {
-            resolve(JSON.parse(data.toString()));
+            const {path, port} = JSON.parse(data.toString())
+            resolve({path, port});
           } catch (error) {
-            const [ip, port] = data.toString().split(":")
-            resolve({ip, port});
+            const [path, port] = data.toString().split(":")
+            resolve({path, port});
           }
         })
         .on("error", (err) => reject(err))

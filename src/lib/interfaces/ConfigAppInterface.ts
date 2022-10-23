@@ -1,8 +1,9 @@
-import { ClientInterface } from "./ClientInterface";
+import { IpPortInterface } from "./IpPortInterface";
 
 export interface ConfigAppInterface {
     port: number;
     serviceName: string;
     mode: "client" | "server";
-    clientConfig?: ClientInterface;
+    clientConfig?: IpPortInterface;
+    dnsConfig?: IpPortInterface;
 }

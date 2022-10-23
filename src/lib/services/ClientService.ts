@@ -1,5 +1,5 @@
 import net from "net";
-import { ClientInterface } from "../interfaces/ClientInterface";
+import { IpPortInterface } from "../interfaces/IpPortInterface";
 import DnsConnectionService from "./DnsConnectionService";
 
 interface ConfigNet {
@@ -13,19 +13,24 @@ interface ConfigClient {
   path: string;
   body?: string;
 }
+
+
 // Ponto de melhoria:
 // as duas funcoes estao utilizando o mesmo código, poderia mudar
 // pra usar apenas um método;
 export default class ClientService {
+  private dnsCon = new DnsConnectionService();
+  private knownServices: any = {}
+  private readonly dsnConfig: IpPortInterface | undefined;
+
   // private hostname: string;
   // private port: number;
   
-  // constructor(clientConfigJSON?: ConfigNet) {
-  //   if (clientConfigJSON) {
-  //     this.hostname = clientConfigJSON.hostname;
-  //     this.port = clientConfigJSON.port;
-  //   }
-  // }
+  constructor(dnsConfig?: IpPortInterface) {
+    if (dnsConfig) {
+      this.dsnConfig = dnsConfig;
+    }
+  }
 
   // private getConnection(clientConfigJSON?: ConfigNet): net.Socket {
   //   const path = clientConfigJSON?.hostname || this.hostname;
@@ -45,32 +50,47 @@ export default class ClientService {
     return connection;
   }
 
-  async receiveData({ hostname, port }: ConfigNet, { path }: ConfigClient) {
+  private findKnownServer = (serverName: string): any =>
+    this.knownServices[serverName] ? this.knownServices[serverName] : undefined;
 
-    console.log('dsn start')
-    const dnsCon = new DnsConnectionService();
-    const object = await dnsCon.getIpAndPort('student', "127.0.0.1", 1234)
-    console.log(object)
-    // return new Promise((resolve, reject) => {
-    //   const connection = this.getConnection(hostname, port);
+  // async receiveData({ hostname, port }: ConfigNet, { path }: ConfigClient) {
+  async receiveData(service: string, server?: IpPortInterface) {
+    console.log(service, this.dsnConfig)
+    if (!server) server = this.findKnownServer(service);
+    if (!server && this.dsnConfig) {
+      const dnsCon = new DnsConnectionService();
+      const object = await dnsCon.getIpAndPort(service, this.dsnConfig.path, this.dsnConfig.port)
+      if (object) {
+        console.log('DNS RESPONSE',object)
+        // const { path, port } = object;
+      }
+
+    } else {
+      console.log("[ERROR] - Sem informações de servidor ou DNS")
+    }
+    if(!server?.path || !server.port) { console.log("[ERROR] - servidor inalcançável")}
+    
+
       const writeString = `
-        GET ${path} HTTP/1.1
+        GET ${service} HTTP/1.1
         Content-Type: application/json
         Connection: keep-alive
-        Host: ${hostname}:${port}
+        Host: ${server?.path}:${server?.port}
       `;
-
-    //   connection
-    //     .on("data", (data) => {
-    //       try {
-    //         resolve(JSON.parse(data.toString()));
-    //       } catch (error) {
-    //         resolve(data.toString());
-    //       }
-    //       connection.destroy();
-    //     })
-    //     .on("error", (err) => reject(err))
-    //     .write(writeString);
+    
+    // return new Promise((resolve, reject) => {
+    //   const connection = this.getConnection(server?.path, server?.port);
+    //     connection
+    //       .on("data", (data) => {
+    //         try {
+    //           resolve(JSON.parse(data.toString()));
+    //         } catch (error) {
+    //           resolve(data.toString());
+    //         }
+    //         connection.destroy();
+    //       })
+    //       .on("error", (err) => reject(err))
+    //       .write(writeString);      
     // });
   }
 
