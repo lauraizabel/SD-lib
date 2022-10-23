@@ -7,23 +7,25 @@ import DnsConnectionService, {
   DnsConfig,
 } from "./services/DnsConnectionService";
 import ClientService from "./services/ClientService";
+import { ConfigAppInterface } from "./interfaces/ConfigAppInterface";
 
 export class App {
   private routeService = new RoutesService();
   private readonly httpService = new HttpService(this.routeService);
   private readonly dnsConnectionService = new DnsConnectionService();
-  private readonly clientService = new ClientService();
+  private clientService : ClientService = new ClientService();
 
   private readonly port: number;
   private readonly address: string;
   private readonly serviceName: string;
 
-  constructor(port: number, serviceName: string) {
-    this.port = port;
-    // aqui ele pega automaticamente o valor do ip da máquina, caso nao exista
+  constructor(appConfig: ConfigAppInterface) {
+    // this.clientService = new ClientService(appConfig.clientConfig);
+    this.port = appConfig.port;
+    // aqui ele pega automati'camente o valor do ip da máquina, caso nao exista
     // ele usa localhost como default
     this.address = ipv4Ips[0]?.address || "127.0.0.1";
-    this.serviceName = serviceName;
+    this.serviceName = appConfig.serviceName;
   }
 
   async server() {
@@ -58,13 +60,16 @@ export class App {
   }
 }
 
-const app = new App(3001, "setStudent");
+const clientConfigJSON = { hostname: "localhost", port: 3004 };
+const appConfigJSON : ConfigAppInterface = { port: 3001, serviceName: "setStudent", mode: "client", clientConfig:clientConfigJSON };
+
+const app = new App(appConfigJSON);
 
 const init = async () => {
   const data = await app
     .client()
     // abstrair ainda mais e conectar com o DNS
-    .receiveData({ hostname: "localhost", port: 3004 }, { path: "/comments" });
+    .receiveData(clientConfigJSON, { path: "/comments" });
 
   console.log(data);
     

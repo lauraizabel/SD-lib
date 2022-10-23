@@ -1,4 +1,5 @@
 import net from "net";
+import { ClientInterface } from "../interfaces/ClientInterface";
 
 interface ConfigNet {
   hostname: string;
@@ -15,6 +16,22 @@ interface ConfigClient {
 // as duas funcoes estao utilizando o mesmo código, poderia mudar
 // pra usar apenas um método;
 export default class ClientService {
+  // private hostname: string;
+  // private port: number;
+  
+  // constructor(clientConfigJSON?: ConfigNet) {
+  //   if (clientConfigJSON) {
+  //     this.hostname = clientConfigJSON.hostname;
+  //     this.port = clientConfigJSON.port;
+  //   }
+  // }
+
+  // private getConnection(clientConfigJSON?: ConfigNet): net.Socket {
+  //   const path = clientConfigJSON?.hostname || this.hostname;
+  //   const port = clientConfigJSON?.port || this.port;
+    
+  //   if(!path || !port) throw new Error("Sem informações do servidor do Client")
+
   private getConnection(path: string, port: number): net.Socket {
     const connection = net
       .connect(port, path, () =>
@@ -52,6 +69,7 @@ export default class ClientService {
   }
 
   sendData({ hostname, port }: ConfigNet, { body, path }: ConfigClient) {
+  // sendData(service: string , body: any, server?: ConfigNet) {
     return new Promise((resolve, reject) => {
       const connection = this.getConnection(hostname, port);
 
