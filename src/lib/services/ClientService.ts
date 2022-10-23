@@ -2,122 +2,161 @@ import net from "net";
 import { IpPortInterface } from "../interfaces/IpPortInterface";
 import DnsConnectionService from "./DnsConnectionService";
 
-interface ConfigNet {
-  hostname: string;
-  port: number;
-}
-
-// Para passar o body para a requisicao vai precisar passar como string,
-// com um JSON.stringfy()
-interface ConfigClient {
-  path: string;
-  body?: string;
-}
-
-
-// Ponto de melhoria:
-// as duas funcoes estao utilizando o mesmo código, poderia mudar
-// pra usar apenas um método;
 export default class ClientService {
   private dnsCon = new DnsConnectionService();
-  private knownServices: any = {}
+  private knownServices: any = {};
   private readonly dsnConfig: IpPortInterface | undefined;
 
-  // private hostname: string;
-  // private port: number;
-  
   constructor(dnsConfig?: IpPortInterface) {
     if (dnsConfig) {
       this.dsnConfig = dnsConfig;
     }
   }
 
-  // private getConnection(clientConfigJSON?: ConfigNet): net.Socket {
-  //   const path = clientConfigJSON?.hostname || this.hostname;
-  //   const port = clientConfigJSON?.port || this.port;
-    
-  //   if(!path || !port) throw new Error("Sem informações do servidor do Client")
+  private formatResponse = (data: string): any => {
+    try {
+      const [http, status, response] = data.split(" ");
+      const startJsonIdx = response.indexOf("{");
+      return {
+        status,
+        response:
+          startJsonIdx !== -1
+            ? JSON.parse(response.substring(startJsonIdx - 1))
+            : response,
+      };
+    } catch (error) {
+      return data;
+    }
+  };
 
   private getConnection(port?: number, path?: string): net.Socket | undefined {
     if (!port || !path) return undefined;
     const connection = net
       .connect(port, path, () =>
-        console.info("[getConnection] - connected to server")
+      {}
       )
       .on("error", () =>
-        console.log("[getConnection] - ERROR WHEN TRY CONNECT")
+      {}
       )
-      .on("connect", () => console.log("[getConnection] - connected"));
+      .on("connect", () => {});
     return connection;
   }
 
   private findKnownServer = (serverName: string): any =>
     this.knownServices[serverName] ? this.knownServices[serverName] : undefined;
 
-  // async receiveData({ hostname, port }: ConfigNet, { path }: ConfigClient) {
   async receiveData(service: string, server?: IpPortInterface) {
-    console.log(service, this.dsnConfig)
     if (!server) server = this.findKnownServer(service);
     if (!server && this.dsnConfig) {
-      // const dnsCon = new DnsConnectionService();
-      const object :IpPortInterface= await this.dnsCon.getIpAndPort(service, this.dsnConfig.path, this.dsnConfig.port)
+      const object: IpPortInterface = await this.dnsCon.getIpAndPort(
+        service,
+        this.dsnConfig.path,
+        this.dsnConfig.port
+      );
       if (object) {
         server = object;
       }
-
-    } else {
-      console.log("[ERROR] - Sem informações de servidor ou DNS")
+    } else if(!this.dsnConfig) {
+      console.log("[ERROR] - Sem informações de servidor ou DNS");
+      return;
     }
-    if (server?.path === undefined || server.port === undefined) { console.log("[ERROR] - servidor inalcançável") }
+
     
+    if (server?.path === undefined || server.port === undefined) {
+      console.log("[ERROR] - servidor inalcançável");
+      return;
+    }
+
+    this.knownServices[service] = server;
+
     const writeString = `
         GET ${service} HTTP/1.1
         Content-Type: application/json
         Connection: keep-alive
         Host: ${server?.path}:${server?.port}
+        path: ${service}
+        method: GET
       `;
+
     return new Promise((resolve, reject) => {
-      // if(server?.path)
       const connection = this.getConnection(server?.port, server?.path);
-      if(connection)
+      if (connection)
         connection
           .on("data", (data) => {
             try {
-              resolve(JSON.parse(data.toString()));
+              resolve(this.formatResponse(data.toString()));
             } catch (error) {
               resolve(data.toString());
             }
             connection.destroy();
           })
           .on("error", (err) => reject(err))
-          .write(writeString);      
+          .write(writeString);
     });
   }
 
-  sendData({ hostname, port }: ConfigNet, { body, path }: ConfigClient) {
-  // sendData(service: string , body: any, server?: ConfigNet) {
-    return new Promise((resolve, reject) => {
-      const connection = this.getConnection(port, hostname);
+  async sendData(
+    service: string,
+    body: Object | string,
+    server?: IpPortInterface
+  ) {
+    console.log(this.knownServices);
 
-      const writeString = `
-          POST ${path} HTTP/1.1
+    if (!server) server = this.findKnownServer(service);
+
+    if (!server && this.dsnConfig) {
+      const object: IpPortInterface = await this.dnsCon.getIpAndPort(
+        service,
+        this.dsnConfig.path,
+        this.dsnConfig.port
+      );
+      
+      if (object) {
+        server = object;
+      }
+    } else if(!this.dsnConfig) {
+      console.log("[ERROR] - Sem informações de servidor ou DNS");
+      return;
+    }
+
+    if (server?.path === undefined || server.port === undefined) {
+      console.log("[ERROR] - servidor inalcançável");
+      return;
+    }
+
+    this.knownServices[service] = server;
+
+    let newBody = "";
+    try {
+      newBody = JSON.stringify(body);
+    } catch (error) {
+      newBody = body as string;
+    }
+
+    const writeString = `
+          POST ${service} HTTP/1.1
           Content-Type: application/json
-          Host: ${hostname}:${port}
+          Host: ${server?.path}:${server?.port}
           Connection: keep-alive
-          Content-Length: ${body?.length}
-          ${body}
+          path: ${service}
+          method: POST
+          Content-Length: ${newBody.length}
+          Body: ${newBody}
         `;
-      if(connection)
-      connection
-        .on("data", (data) => {
-          try {
-            resolve(JSON.parse(data.toString()));
-          } catch (error) {
-            resolve(data.toString());
-          }
-        })
-        .on("error", (err) => reject(err))
-        .write(writeString);
+    return new Promise((resolve, reject) => {
+      const connection = this.getConnection(server?.port, server?.path);
+      if (connection)
+        connection
+          .on("data", (data) => {
+            try {
+              resolve(this.formatResponse(data.toString()));
+            } catch (error) {
+              resolve(data.toString());
+            }
+            connection.destroy();
+          })
+          .on("error", (err) => reject(err))
+          .write(writeString);
     });
   }
 }

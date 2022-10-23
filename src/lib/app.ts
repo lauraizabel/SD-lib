@@ -68,13 +68,16 @@ const appConfigJSON : ConfigAppInterface = { port: 3001, serviceName: "setStuden
 const app = new App(appConfigJSON);
 
 const init = async () => {
-  const data = await app
+  const data : any = await app
     .client()
-    // abstrair ainda mais e conectar com o DNS
-    .receiveData( "/comment");
+    .sendData('comment', { nome: 'cristal' });
 
-  console.log(data);
-    
+  const data2: any = await app
+    .client()
+    .sendData('comment', { nome: 'cristal2' });
+
+  console.log({ data })
+  console.log({ data2 })
 };
 
 init();

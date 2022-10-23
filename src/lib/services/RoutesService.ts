@@ -22,7 +22,9 @@ export default class RoutesService implements RoutesServiceInterface {
 
   public getRoute = (path: string, method: MethodsInterface) => {
     return this.routes.find(
-      (route) => route.path === path.split("?")[0].replace("/", "") && route.method === method
+      (route) =>
+        route.path === path.split("?")[0].replace("/", "") &&
+        route.method === method
     );
   };
 }

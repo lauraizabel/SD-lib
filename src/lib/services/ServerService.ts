@@ -61,7 +61,7 @@ export default class HttpService implements HttpServiceInterface {
     } catch {
       request.query = {};
     }
-    
+
     try {
       request.body = JSON.parse(bodyContent[0]);
     } catch (error) {
@@ -96,8 +96,8 @@ export default class HttpService implements HttpServiceInterface {
   async receiveCallback(dataBuffer: Buffer, socket: net.Socket) {
     const request = this.transformDataBufferInRequestObject(dataBuffer);
     const controller = this.routesService.getRoute(
-      request.path,
-      request.method as MethodsInterface
+      request.headers.path,
+      request.headers.method as MethodsInterface
     );
 
     if (!controller) {
@@ -116,4 +116,3 @@ export default class HttpService implements HttpServiceInterface {
     socket.end();
   }
 }
-

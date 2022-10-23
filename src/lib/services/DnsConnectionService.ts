@@ -34,18 +34,21 @@ export default class DnsConnectionService {
     return;
   }
 
-  async getIpAndPort(serviceName: string, dnsAddress: string, dnsPort: number) :Promise<IpPortInterface> {
+  async getIpAndPort(
+    serviceName: string,
+    dnsAddress: string,
+    dnsPort: number
+  ): Promise<IpPortInterface> {
     return await new Promise((resolve, reject) => {
       net
         .connect(dnsPort, dnsAddress)
         .on("data", (data) => {
-          console.log("DATA",data.toString(), "END")
           try {
-            const {path, port} = JSON.parse(data.toString())
-            resolve({path, port});
+            const { path, port } = JSON.parse(data.toString());
+            resolve({ path, port });
           } catch (error) {
-            const [path, port] = data.toString().split(":")
-            resolve({path, port: parseInt(port)});
+            const [path, port] = data.toString().split(":");
+            resolve({ path, port: parseInt(port) });
           }
         })
         .on("error", (err) => reject(err))
