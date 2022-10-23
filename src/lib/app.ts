@@ -60,7 +60,7 @@ export class App {
   }
 }
 
-const clientConfigJSON = { hostname: "localhost", port: 3004 };
+const clientConfigJSON = { hostname: "localhost", port: 3002 };
 const appConfigJSON : ConfigAppInterface = { port: 3001, serviceName: "setStudent", mode: "client", clientConfig:clientConfigJSON };
 
 const app = new App(appConfigJSON);
