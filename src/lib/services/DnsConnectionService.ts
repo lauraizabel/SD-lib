@@ -1,4 +1,5 @@
 import net from "net";
+import { IpPortInterface } from "../interfaces/IpPortInterface";
 
 export interface DnsConfig {
   config: {
@@ -33,8 +34,8 @@ export default class DnsConnectionService {
     return;
   }
 
-  async getIpAndPort(serviceName: string, dnsAddress: string, dnsPort: number) {
-    return new Promise((resolve, reject) => {
+  async getIpAndPort(serviceName: string, dnsAddress: string, dnsPort: number) :Promise<IpPortInterface> {
+    return await new Promise((resolve, reject) => {
       net
         .connect(dnsPort, dnsAddress)
         .on("data", (data) => {
@@ -44,7 +45,7 @@ export default class DnsConnectionService {
             resolve({path, port});
           } catch (error) {
             const [path, port] = data.toString().split(":")
-            resolve({path, port});
+            resolve({path, port: parseInt(port)});
           }
         })
         .on("error", (err) => reject(err))

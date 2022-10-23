@@ -38,7 +38,8 @@ export default class ClientService {
     
   //   if(!path || !port) throw new Error("Sem informações do servidor do Client")
 
-  private getConnection(path: string, port: number): net.Socket {
+  private getConnection(port?: number, path?: string): net.Socket | undefined {
+    if (!port || !path) return undefined;
     const connection = net
       .connect(port, path, () =>
         console.info("[getConnection] - connected to server")
@@ -58,46 +59,45 @@ export default class ClientService {
     console.log(service, this.dsnConfig)
     if (!server) server = this.findKnownServer(service);
     if (!server && this.dsnConfig) {
-      const dnsCon = new DnsConnectionService();
-      const object = await dnsCon.getIpAndPort(service, this.dsnConfig.path, this.dsnConfig.port)
+      // const dnsCon = new DnsConnectionService();
+      const object :IpPortInterface= await this.dnsCon.getIpAndPort(service, this.dsnConfig.path, this.dsnConfig.port)
       if (object) {
-        console.log('DNS RESPONSE',object)
-        // const { path, port } = object;
+        server = object;
       }
 
     } else {
       console.log("[ERROR] - Sem informações de servidor ou DNS")
     }
-    if(!server?.path || !server.port) { console.log("[ERROR] - servidor inalcançável")}
+    if (server?.path === undefined || server.port === undefined) { console.log("[ERROR] - servidor inalcançável") }
     
-
-      const writeString = `
+    const writeString = `
         GET ${service} HTTP/1.1
         Content-Type: application/json
         Connection: keep-alive
         Host: ${server?.path}:${server?.port}
       `;
-    
-    // return new Promise((resolve, reject) => {
-    //   const connection = this.getConnection(server?.path, server?.port);
-    //     connection
-    //       .on("data", (data) => {
-    //         try {
-    //           resolve(JSON.parse(data.toString()));
-    //         } catch (error) {
-    //           resolve(data.toString());
-    //         }
-    //         connection.destroy();
-    //       })
-    //       .on("error", (err) => reject(err))
-    //       .write(writeString);      
-    // });
+    return new Promise((resolve, reject) => {
+      // if(server?.path)
+      const connection = this.getConnection(server?.port, server?.path);
+      if(connection)
+        connection
+          .on("data", (data) => {
+            try {
+              resolve(JSON.parse(data.toString()));
+            } catch (error) {
+              resolve(data.toString());
+            }
+            connection.destroy();
+          })
+          .on("error", (err) => reject(err))
+          .write(writeString);      
+    });
   }
 
   sendData({ hostname, port }: ConfigNet, { body, path }: ConfigClient) {
   // sendData(service: string , body: any, server?: ConfigNet) {
     return new Promise((resolve, reject) => {
-      const connection = this.getConnection(hostname, port);
+      const connection = this.getConnection(port, hostname);
 
       const writeString = `
           POST ${path} HTTP/1.1
@@ -107,7 +107,7 @@ export default class ClientService {
           Content-Length: ${body?.length}
           ${body}
         `;
-
+      if(connection)
       connection
         .on("data", (data) => {
           try {
