@@ -96,8 +96,8 @@ export default class HttpService implements HttpServiceInterface {
   async receiveCallback(dataBuffer: Buffer, socket: net.Socket) {
     const request = this.transformDataBufferInRequestObject(dataBuffer);
     const controller = this.routesService.getRoute(
-      request.path,
-      request.method as MethodsInterface
+      request.headers.path,
+      request.headers.method as MethodsInterface
     );
 
     if (!controller) {

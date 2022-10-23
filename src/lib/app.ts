@@ -63,15 +63,19 @@ export class App {
 }
 
 const clientConfigJSON :IpPortInterface = { path: "127.0.0.1", port: 1234 };
-const appConfigJSON : ConfigAppInterface = { port: 3001, serviceName: "setStudent", mode: "client", dnsConfig:clientConfigJSON };
+const appConfigJSON : ConfigAppInterface = { port: 3002, serviceName: "/comment", mode: "server", dnsConfig:clientConfigJSON };
 
 const app = new App(appConfigJSON);
 
 const init = async () => {
   const data = await app
-    .client()
-    // abstrair ainda mais e conectar com o DNS
-    .receiveData( "/comment");
+    .server()
+  app.route({
+    path: 'comment', controller(request, response) {
+      console.log("Chegou ao controller");
+    return {status: 200,json: "Chegou"};
+  },
+  method: "GET"})
 
   console.log(data);
     
