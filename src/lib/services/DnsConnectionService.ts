@@ -41,7 +41,8 @@ export default class DnsConnectionService {
           try {
             resolve(JSON.parse(data.toString()));
           } catch (error) {
-            resolve(data.toString());
+            const [ip, port] = data.toString().split(":")
+            resolve({ip, port});
           }
         })
         .on("error", (err) => reject(err))

@@ -1,5 +1,6 @@
 import net from "net";
 import { ClientInterface } from "../interfaces/ClientInterface";
+import DnsConnectionService from "./DnsConnectionService";
 
 interface ConfigNet {
   hostname: string;
@@ -44,9 +45,14 @@ export default class ClientService {
     return connection;
   }
 
-  receiveData({ hostname, port }: ConfigNet, { path }: ConfigClient) {
-    return new Promise((resolve, reject) => {
-      const connection = this.getConnection(hostname, port);
+  async receiveData({ hostname, port }: ConfigNet, { path }: ConfigClient) {
+
+    console.log('dsn start')
+    const dnsCon = new DnsConnectionService();
+    const object = await dnsCon.getIpAndPort('student', "127.0.0.1", 1234)
+    console.log(object)
+    // return new Promise((resolve, reject) => {
+    //   const connection = this.getConnection(hostname, port);
       const writeString = `
         GET ${path} HTTP/1.1
         Content-Type: application/json
@@ -54,18 +60,18 @@ export default class ClientService {
         Host: ${hostname}:${port}
       `;
 
-      connection
-        .on("data", (data) => {
-          try {
-            resolve(JSON.parse(data.toString()));
-          } catch (error) {
-            resolve(data.toString());
-          }
-          connection.destroy();
-        })
-        .on("error", (err) => reject(err))
-        .write(writeString);
-    });
+    //   connection
+    //     .on("data", (data) => {
+    //       try {
+    //         resolve(JSON.parse(data.toString()));
+    //       } catch (error) {
+    //         resolve(data.toString());
+    //       }
+    //       connection.destroy();
+    //     })
+    //     .on("error", (err) => reject(err))
+    //     .write(writeString);
+    // });
   }
 
   sendData({ hostname, port }: ConfigNet, { body, path }: ConfigClient) {
