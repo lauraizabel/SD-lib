@@ -14,18 +14,15 @@ export class App {
   private routeService = new RoutesService();
   private readonly httpService = new HttpService(this.routeService);
   private readonly dnsConnectionService = new DnsConnectionService();
-  private  readonly clientService : ClientService;
+  private readonly clientService: ClientService;
 
   private readonly port: number;
   private readonly address: string;
   private readonly serviceName: string;
 
   constructor(appConfig: ConfigAppInterface) {
-    this.clientService = new ClientService(appConfig.dnsConfig)
-    // this.clientService = new ClientService(appConfig.clientConfig);
+    this.clientService = new ClientService(appConfig.dnsConfig);
     this.port = appConfig.port;
-    // aqui ele pega automati'camente o valor do ip da máquina, caso nao exista
-    // ele usa localhost como default
     this.address = ipv4Ips[0]?.address || "127.0.0.1";
     this.serviceName = appConfig.serviceName;
   }
@@ -33,9 +30,6 @@ export class App {
   async server() {
     await this.httpService.start(this.port, this.address);
 
-    // Aqui ta as configs pra se conectar com o dns,
-    // coloquei tudo como fixo (do dns) pq nao sabia como fazer, mas acho q assim
-    // ta de boa.
     const setServerOnParams: DnsConfig = {
       config: {
         address: this.address,
@@ -50,9 +44,6 @@ export class App {
     await this.dnsConnectionService.setServerOn(setServerOnParams);
   }
 
-  // esse client() poderia ser alterado para apenas utilizar a propria classe instanciada, ao inves de declarar ela aqui
-  // ela sendo declarada aqui, obriga ao cliente ter que setar os parametros que ele nao deveria saber 
-  // portanto, acho que ver se faz sentido se aqui realmente é necessário faz sentido.
   client() {
     return this.clientService;
   }
@@ -62,22 +53,25 @@ export class App {
   }
 }
 
-const clientConfigJSON :IpPortInterface = { path: "127.0.0.1", port: 1234 };
-const appConfigJSON : ConfigAppInterface = { port: 3001, serviceName: "setStudent", mode: "client", dnsConfig:clientConfigJSON };
+const clientConfigJSON: IpPortInterface = { path: "127.0.0.1", port: 1234 };
+const appConfigJSON: ConfigAppInterface = {
+  port: 3001,
+  serviceName: "setStudent",
+  mode: "client",
+  dnsConfig: clientConfigJSON,
+};
 
 const app = new App(appConfigJSON);
 
 const init = async () => {
-  const data : any = await app
-    .client()
-    .sendData('comment', { nome: 'cristal' });
+  const data: any = await app.client().sendData("comment", { nome: "cristal" });
 
   const data2: any = await app
     .client()
-    .sendData('comment', { nome: 'cristal2' });
+    .sendData("comment", { nome: "cristal2", testando: 'json' });
 
-  console.log({ data })
-  console.log({ data2 })
+  console.log({ data });
+  console.log({ data2 });
 };
 
 init();

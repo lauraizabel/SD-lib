@@ -100,8 +100,6 @@ export default class ClientService {
     body: Object | string,
     server?: IpPortInterface
   ) {
-    console.log(this.knownServices);
-
     if (!server) server = this.findKnownServer(service);
 
     if (!server && this.dsnConfig) {
@@ -140,9 +138,10 @@ export default class ClientService {
           Connection: keep-alive
           path: ${service}
           method: POST
-          Content-Length: ${newBody.length}
-          Body: ${newBody}
+          Content-Length: ${newBody.length}\r\n\r\n
+          ${newBody}
         `;
+  
     return new Promise((resolve, reject) => {
       const connection = this.getConnection(server?.port, server?.path);
       if (connection)
